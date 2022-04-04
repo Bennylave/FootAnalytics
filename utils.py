@@ -20,15 +20,34 @@ cols = ['id',
 
 
 def search_competition(competition_name, season):
+    """
+
+    :param competition_name:
+    :param season:
+    :return: IDs for both competition and the season
+    """
+    # Reading comptetitions .json
     df = pd.read_json("data/competitions.json")
+
+    # Getting competition
     competition = df[(df['competition_name'] == str(competition_name)) & (df['season_name'] == str(season))]
+    # Getting competition_id
     competition_id = str(competition.iloc[0]['competition_id'])
+    # Getting season_id
     season_id = str(competition.iloc[0]['season_id'])
 
     return competition_id, season_id
 
 
 def search_match(competition_id, season_id, home, away):
+    """
+
+    :param competition_id:
+    :param season_id:
+    :param home: name of home team
+    :param away: name of away team
+    :return: Match ID given the parameters
+    """
     df = pd.read_json('data/matches/' + str(competition_id) + '/' + str(season_id) + '.json')
 
     df[['home_team_id', 'home_team_name',
@@ -48,6 +67,11 @@ def search_match(competition_id, season_id, home, away):
 
 
 def read_lineups(match_id):
+    """
+
+    :param match_id:
+    :return: teams lineups given the match id
+    """
     lineups = pd.read_json('data/lineups/' + match_id + '.json')
     lineups = lineups.explode("lineup").reset_index(drop=True).copy()
     lineups[["player_id", "full_name", "nickname", "jersey_number", "country"]] = lineups["lineup"].apply(
@@ -57,81 +81,66 @@ def read_lineups(match_id):
 
 
 def read_events(match_id):
+    """
+
+    :param match_id:
+    :return: df with relevant events given the match id
+    """
+    # Readin match events json
     f = open("data/events/" + str(match_id) + ".json")
     data = json.load(f)
+    # Noramlizing the json
     events = pd.json_normalize(data, sep="_")
-
+    # Separating x and y into different columns
     events[["location_x", "location_y"]] = events['location'].apply(pd.Series)
-
+    # Getting events which player specific
     events_players = events.copy()[~events.player_name.isnull()]
 
+    # reading lineups and joining with events_df
     lineups = read_lineups(match_id)
     events_players = events_players.join(lineups.set_index("player_id"), on="player_id", how='inner', rsuffix="_player")
+    # Ignoring specified columns
     events_players = events_players.drop(["team_id", "team_id_player", "team_name", "lineup", "full_name"], axis=1)
+    # Replacing player name with nickname where exists
     events_players["player_name"] = np.where(~events_players['nickname'].isnull(), events_players['nickname'],
                                              events_players["player_name"])
-
+    # Separating country name and id into different columns
     events_players[["country_id", "country_name"]] = events_players['country'].apply(pd.Series)
 
     return events, events_players
 
 
 def read_passes(df: pd.DataFrame):
+    """
+
+    :param df: events df that has passes
+    :return: df with passes only
+    """
+    # Ignoring passes with unknown outcome or injury clearances
     data_passes = df[(df["type_name"] == "Pass") & (~df["pass_outcome_name"].isin(["Unknown", "Injury Clearance"]))] \
         .copy()
 
     data_passes[["location_x", "location_y"]] = data_passes['location'].apply(pd.Series)
 
+    # Subsetting events columns to thos including pass related info
     passes_cols = [x for x in data_passes.columns.tolist() if ((x.startswith("pass")) & (not x.endswith("_id")))]
-
+    # Include pass related info in list of columns to keep
     if not all(item in cols for item in passes_cols):
         cols.extend(passes_cols)
-
+    # Subset passes df to include only pass related info
     passes = data_passes[cols]
 
     return passes
 
 
-def get_event_df(df: pd.DataFrame, player_name: str, event_name: str or list, event_values=None,
-                 event_values_col=None, event_subfilter_col=None, event_subfilter_value=None):
-    event_dict = {}
-
-    if isinstance(event_name, list):
-        event_df = df[
-            (df["player_name"].str.contains(str(player_name))) &
-            (df["type_name"].isin(event_name))].copy()
-    else:
-        event_df = df[
-            (df["player_name"].str.contains(str(player_name))) &
-            (df["type_name"] == event_name)].copy()
-
-    if event_subfilter_col is not None:
-        event_df = event_df[event_df[event_subfilter_col] == event_subfilter_value]
-
-    if isinstance(event_values, dict):
-        for key, value in event_values.items():
-            if value == "Not Null":
-                event_dict[key] = event_df[event_df[event_values_col].notnull()]
-            elif value == "Null":
-                event_dict[key] = event_df[event_df[event_values_col].isnull()]
-            else:
-                if isinstance(value, list):
-                    event_dict[key] = event_df[event_df[event_values_col].isin(value)]
-                else:
-                    event_dict[key] = event_df[event_df[event_values_col] == value]
-    else:
-        if isinstance(event_name, list):
-            if len(event_name) == 1:
-                event_dict[event_name[0]] = event_df.copy()
-            else:
-                event_dict["events"] = event_df.copy()
-        else:
-            event_dict[event_name.replace(" ", "_")] = event_df.copy()
-
-    return event_dict
-
 
 def convert_xy_locations(x: list = None, y: list = None, is_shot=False):
+    """
+    :param x: list of coordinates x
+    :param y: list of coordinates y
+    :param is_shot: boolean if it is shot or not
+    :return: converted coordinates to (105,68) system
+    """
     new_x = [i * 105 / 120 for i in x]
     if is_shot:
         new_y = [abs((i * 68 / 80) - 68) for i in y]
@@ -140,29 +149,25 @@ def convert_xy_locations(x: list = None, y: list = None, is_shot=False):
     return new_x, new_y
 
 
-def get_event_locations(event_dict: dict, event_name: None or str, end_location=False):
-    location_dict = {}
-
-    for key, value in event_dict.items():
-        location_dict["X_" + str(key)] = value.location_x.to_list()
-        location_dict["Y_" + str(key)] = value.location_y.to_list()
-        if end_location:
-            end_locations = value[event_name.lower() + "_end_location"].to_list()
-            location_dict["X_" + str(event_name) + "_End_Location"] = [i[0] for i in end_locations]
-            location_dict["Y_" + str(event_name) + "_End_Location"] = [i[1] for i in end_locations]
-
-    return location_dict
-
 
 def read_passes_end_location(df: pd.DataFrame, passes_index_list: list):
+    """
+
+    :param df: df with passes
+    :param passes_index_list: index of passes in the df
+    :return: passes end location coordinates
+    """
+    # List with passes end location indexes
     passes_end_location_index = [x + 1 for x in passes_index_list]
     passes_end_location = df[df.index.isin(passes_end_location_index)].sort_index(ascending=True)
 
+    # Getting location x of ball receipt
     passes_end_location["location_x"] = np.where(
         passes_end_location['possession_team_name'] != passes_end_location['team_name_player'],
         120 - passes_end_location["location_x"],
         passes_end_location["location_x"])
 
+    # Getting location y of ball receipt
     passes_end_location["location_y"] = np.where(
         passes_end_location['possession_team_name'] != passes_end_location['team_name_player'],
         80 - passes_end_location["location_y"],
@@ -172,6 +177,12 @@ def read_passes_end_location(df: pd.DataFrame, passes_index_list: list):
 
 
 def split_by_event_chars(df: pd.DataFrame, char: list or str):
+    """
+
+    :param df: df with events
+    :param char: characteristics of event that are of interest
+    :return: dict of dfs grouped by the characteristics of interest
+    """
     df_dict = {k: v for k, v in df.groupby(char, dropna=False)}
 
     if isinstance(char, List):

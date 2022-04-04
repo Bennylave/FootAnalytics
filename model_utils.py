@@ -6,12 +6,14 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 def split_train_test(df: pd.DataFrame, test_ids:list):
+    # Splitting df into train and test
     train = df.copy()[~df.index.isin(test_ids)]
     test = df.copy()[df.index.isin(test_ids)]
     return train, test
 
 
 def split_feature_target(train:pd.DataFrame, test:pd.DataFrame,target_col:str):
+    # Splitting train and test to X_train, y_train, X_test and y_test
     X_train = train.copy().drop(target_col, axis=1)
     y_train = train.copy()[[target_col]]
 
@@ -22,6 +24,7 @@ def split_feature_target(train:pd.DataFrame, test:pd.DataFrame,target_col:str):
 
 
 def mlp_fit_predict(mlp:MLPClassifier, X_train:pd.DataFrame, y_train:pd.DataFrame, X_test:pd.DataFrame):
+    # fitting and predicting with MultiLayer Perceptron
     mlp.fit(X_train, np.ravel(y_train))
     predictions = mlp.predict_proba(X_test)[:,1]
 
@@ -29,6 +32,16 @@ def mlp_fit_predict(mlp:MLPClassifier, X_train:pd.DataFrame, y_train:pd.DataFram
 
 
 def preprocess_shots_data(data:pd.DataFrame):
+    """
+    Using BoxCox method to remove skewness from "location_x".
+    Using Sqrt to remove skewness from "duration".
+    Scaling columns "possession", "duration", "location_x" and "location_y" using a MinMaxScaler.
+    OneHot Encoding a list of other features.
+
+    :param data: the df to be preprocessed
+    :return: the dataframe already preprocessed
+    """
+
     data_ = data.copy()
 
     data_["duration"] = np.sqrt(data_["duration"])

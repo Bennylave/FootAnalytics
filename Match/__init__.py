@@ -357,35 +357,47 @@ class Match:
         return x_locations_dispossessions, y_locations_dispossessions
 
     def shots_locations(self, name, player=True):
+
+        # Getting players shot locations
         if player:
             df = self.get_shots_df(name, player=True)
         else:
             df = self.get_shots_df(name, player=False)
 
-        df_dict = ut.split_by_event_chars(df, ["shot_outcome_name", "shot_body_part_name"])
+        # Getting a shot dict grouped by outcome and body part
+        df_shot_dict = ut.split_by_event_chars(df, ["shot_outcome_name", "shot_body_part_name"])
 
-        df_shot_location_dict = {k: [v.location_x.tolist(), v.location_y.tolist()] for k, v in df_dict.items()}
+        # Getting a shot location list for each outcome and body part key
+        df_shot_location_dict = {k: [v.location_x.tolist(), v.location_y.tolist()] for k, v in df_shot_dict.items()}
         return df_shot_location_dict
 
     def player_pass_locations(self, player_name):
+
+        # Getting pass locations
         df_pass, df_miss_low, df_complete_low, df_miss_high, df_complete_high, df_ball_receipt = self.get_player_passes_df(
             player_name)
 
+        # Passing all location by x and y to lists
         x_passes = df_pass.location_x.to_list()
         y_passes = df_pass.location_y.to_list()
 
+        # Passes locations x and for low missed passes
         x_location_miss_low_passes = df_miss_low.location_x.to_list()
         y_location_miss_low_passes = df_miss_low.location_y.to_list()
 
+        # Passes locations x and for low completed passes
         x_location_complete_low_passes = df_complete_low.location_x.to_list()
         y_location_complete_low_passes = df_complete_low.location_y.to_list()
 
+        # Passes locations x and for high missed passes
         x_location_miss_high_passes = df_miss_high.location_x.to_list()
         y_location_miss_high_passes = df_miss_high.location_y.to_list()
 
+        # Passes locations x and for High completed passes
         x_location_complete_high_passes = df_complete_high.location_x.to_list()
         y_location_complete_high_passes = df_complete_high.location_y.to_list()
 
+        # Passes locations x and for ball receipts
         x_location_ball_receipt = df_ball_receipt.location_x.to_list()
         y_location_ball_receipt = df_ball_receipt.location_y.to_list()
 
@@ -407,25 +419,35 @@ class Match:
         return player_pass_dict
 
     def player_cross_locations(self, player_name):
+
+        # Getting player cross locations
+
+        # Getting df of crosses
         df_cross, df_miss_low, df_complete_low, df_miss_high, \
         df_complete_high, df_ball_receipt = self.get_player_crosses_df(
             player_name)
 
+        # Getting cross locations x and y coordinates
         x_cross = df_cross.location_x.to_list()
         y_cross = df_cross.location_y.to_list()
 
+        # x and y for low missed crosses
         x_miss_low = df_miss_low.location_x.to_list()
         y_miss_low = df_miss_low.location_y.to_list()
 
+        # x and y for low completed crosses
         x_complete_low = df_complete_low.location_x.to_list()
         y_complete_low = df_complete_low.location_y.to_list()
 
+        # x and y for high missed crosses
         x_miss_high = df_miss_high.location_x.to_list()
         y_miss_high = df_miss_high.location_y.to_list()
 
+        # x and y for high completed crosses
         x_complete_high = df_complete_high.location_x.to_list()
         y_complete_high = df_complete_high.location_y.to_list()
 
+        # x and y for end location of crosses
         x_cross_end_location = df_ball_receipt.location_x.to_list()
         y_cross_end_location = df_ball_receipt.location_y.to_list()
 
@@ -447,11 +469,16 @@ class Match:
         return player_cross_dict
 
     def player_dribbles_locations(self, player_name):
+
+        # Getting player dribble locations
+
         success_dribbles, fail_dribbles = self.get_player_dribbles_df(player_name)
 
+        # x and y for successul dribbles
         x_location_success_dribbles = success_dribbles.location_x.to_list()
         y_location_success_dribbles = success_dribbles.location_y.to_list()
 
+        # x and y for failed dribbles
         x_location_fail_dribbles = fail_dribbles.location_x.to_list()
         y_location_fail_dribbles = fail_dribbles.location_y.to_list()
 
@@ -465,6 +492,8 @@ class Match:
         return dribbles_dict
 
     def player_actions_locations(self, player_name):
+
+        # Getting every player action locations
         player_actions = self.get_player_actions_df(player_name)
 
         player_actions_dict = {
@@ -474,80 +503,43 @@ class Match:
 
         return player_actions_dict
 
-    def test_player_carries(self, player_name):
-
-        event_name = "Carry"
-
-        carries_dict = ut.get_event_df(df=self.events_players, player_name=player_name, event_name=event_name)
-        carries_location_dict = ut.get_event_locations(carries_dict, end_location=True, event_name=event_name)
-
-        pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
-        fig, axs = pitch.draw(figsize=(12, 10))
-
-        pitch.arrows(carries_location_dict["X_Carry"],
-                     carries_location_dict["Y_Carry"],
-                     carries_location_dict["X_Carry_End_Location"],
-                     carries_location_dict["Y_Carry_End_Location"],
-                     ax=axs, color="white", width=2, alpha=0.75, linestyle="--")
-
-        plt.show()
 
     def player_carries(self, player_name):
 
+        # Plotting players carries locations
+
+        # Getting player carry locations
         carries_dict = self.player_carry_locations(player_name)
 
+        # Drawing pitch
         pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
         fig, axs = pitch.draw(figsize=(12, 10))
 
+        # Drawing arrows using carry location and end location
         pitch.arrows(carries_dict["x_carry"], carries_dict["y_carry"], carries_dict["x_end_location"],
                      carries_dict["y_end_location"],
                      ax=axs, color="white", width=2, alpha=0.75, linestyle="--")
 
         plt.show()
 
-    def test_player_clearances(self, player_name):
-
-        event_name = "Clearance"
-        event_values = {
-            "left": "Left Foot",
-            "right": "Right Foot",
-            "head": "Head"
-        }
-
-        clearances_dict = ut.get_event_df(df=self.events_players, player_name=player_name, event_name=event_name,
-                                          event_values=event_values, event_values_col="clearance_body_part_name")
-        clearances_location_dict = ut.get_event_locations(event_dict=clearances_dict, event_name=event_name)
-
-        pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
-        fig, axs = pitch.draw(figsize=(12, 10))
-
-        pitch.scatter(clearances_location_dict["X_left"], clearances_location_dict["Y_left"], s=150,
-                      edgecolors="white",
-                      c="blue", marker="<", ax=axs, label="Left Foot")
-
-        pitch.scatter(clearances_location_dict["X_right"], clearances_location_dict["Y_right"],
-                      s=150, edgecolors="white",
-                      c="blue", marker=">", ax=axs, label="Right Foot")
-
-        pitch.scatter(clearances_location_dict["X_head"], clearances_location_dict["Y_head"], s=150,
-                      edgecolors="white",
-                      c="blue", marker="^", ax=axs, label="Head")
-
-        plt.legend(loc=1)
-        plt.show()
-
     def player_clearances(self, player_name):
+
+        # Plotting player's clearances
+
+        # Getting clearances location
         clearances_dict = self.player_clearances_location(player_name)
 
+        # Drawing pitch
         pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
         fig, axs = pitch.draw(figsize=(12, 10))
 
+        # Plotting left foot clearances
         pitch.scatter(clearances_dict["x_left"], clearances_dict["y_left"], s=150, edgecolors="white",
                       c="blue", marker="<", ax=axs, label="Left Foot")
-
+        # Plotting right foot clearances
         pitch.scatter(clearances_dict["x_right"], clearances_dict["y_right"], s=150, edgecolors="white",
                       c="blue", marker=">", ax=axs, label="Right Foot")
-
+        # Plotting head clearances
         pitch.scatter(clearances_dict["x_head"], clearances_dict["y_head"], s=150, edgecolors="white",
                       c="blue", marker="^", ax=axs, label="Head")
 
@@ -555,55 +547,37 @@ class Match:
         plt.show()
 
     def player_fouls(self, player_name):
+
+        # Plotting player's fouls
+
+        # Getting fouls locations
         fouls_dict = self.player_fouls_locations(player_name)
 
+        # Drawing Pitch
         pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
         fig, axs = pitch.draw(figsize=(12, 10))
 
+        # Plotting fouls with no card
         pitch.scatter(fouls_dict["x_fouls_no_card"], fouls_dict["y_fouls_no_card"], s=150, edgecolors="black",
                       c="white", marker="o", ax=axs, label="No card")
-
+        # Plotting fouls with yellow card
         pitch.scatter(fouls_dict["x_fouls_yellow_card"], fouls_dict["y_fouls_yellow_card"], s=150, edgecolors="black",
                       c="gold", marker="o", ax=axs, label="Yellow card")
-
+        # Plotting fouls with red card
         pitch.scatter(fouls_dict["x_fouls_red_card"], fouls_dict["y_fouls_red_card"], s=150, edgecolors="black",
                       c="red", marker="o", ax=axs, label="Red card")
 
         plt.legend(loc=1)
         plt.show()
 
-    def test_player_fouls(self, player_name):
-        event_name = "Foul Committed"
-        event_values = {
-            "no_card": "Null",
-            "yellow": "Yellow Card",
-            "red": ["Second Yellow", "Red Card"]
-        }
-
-        fouls_dict = ut.get_event_df(df=self.events_players, player_name=player_name, event_name=event_name,
-                                     event_values=event_values, event_values_col="foul_committed_card_name")
-        fouls_location_dict = ut.get_event_locations(event_dict=fouls_dict, event_name=event_name)
-
-        pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
-        fig, axs = pitch.draw(figsize=(12, 10))
-
-        pitch.scatter(fouls_location_dict["X_no_card"], fouls_location_dict["Y_no_card"], s=150,
-                      edgecolors="black",
-                      c="white", marker="o", ax=axs, label="No Card")
-
-        pitch.scatter(fouls_location_dict["X_yellow"], fouls_location_dict["Y_yellow"],
-                      s=150, edgecolors="black",
-                      c="gold", marker="o", ax=axs, label="Yellow Card")
-
-        pitch.scatter(fouls_location_dict["X_red"], fouls_location_dict["Y_red"], s=150,
-                      edgecolors="black",
-                      c="red", marker="o", ax=axs, label="Red Card")
-
-        plt.legend(loc=1)
-        plt.show()
 
     def player_dispossessions(self, player_name):
+        # PLotting player's dispossessions
+
+        # Getting dispossession location
         x, y = self.player_dispossessions_locations(player_name)
+
+        # Drawing Pitch
         pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
         fig, axs = pitch.draw(figsize=(12, 10))
 
@@ -611,22 +585,15 @@ class Match:
                       c="red", marker="o", ax=axs)
         plt.show()
 
-    def test_player_dispossessions(self, player_name):
-        event_name = "Dispossessed"
-
-        dispossession_dict = ut.get_event_df(df=self.events_players, player_name=player_name, event_name=event_name)
-        dispossession_location_dict = ut.get_event_locations(event_dict=dispossession_dict, event_name=event_name)
-
-        pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
-        fig, axs = pitch.draw(figsize=(12, 10))
-
-        pitch.scatter(dispossession_location_dict["X_Dispossessed"], dispossession_location_dict["Y_Dispossessed"],
-                      s=150, edgecolors="white",
-                      c="red", marker="o", ax=axs)
-        plt.show()
 
     def player_fouls_won(self, player_name):
+
+        # Plotting players fouls won
+
+        # Getting fouls won locations
         x, y = self.player_fouls_won_locations(player_name)
+
+        # Drawing Pitch
         pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
         fig, axs = pitch.draw(figsize=(12, 10))
 
@@ -634,25 +601,19 @@ class Match:
                       c="blue", marker="o", ax=axs)
         plt.show()
 
-    def test_player_fouls_won(self, player_name):
-        event_name = "Foul Won"
-
-        dispossession_dict = ut.get_event_df(df=self.events_players, player_name=player_name, event_name=event_name)
-        dispossession_location_dict = ut.get_event_locations(event_dict=dispossession_dict, event_name=event_name)
-
-        pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
-        fig, axs = pitch.draw(figsize=(12, 10))
-
-        pitch.scatter(dispossession_location_dict["X_Foul_Won"], dispossession_location_dict["Y_Foul_Won"], s=150,
-                      edgecolors="white",
-                      c="blue", marker="o", ax=axs)
-        plt.show()
 
     def player_shots(self, name):
+
+        # Plotting player's shots by body part and outcome
+
+        # Getting shots location
         df_shot_location_dict = self.shots_locations(name, player=True)
+
+        # Drawing pitch
         pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
         fig, axs = pitch.draw(figsize=(12, 10))
 
+        # Using constants from constants.py to plot by body part and outcome
         for k, v in df_shot_location_dict.items():
             outcome = k.split("_")[0]
             body_part = k.split("_")[1]
@@ -665,35 +626,18 @@ class Match:
                    loc=1)
         plt.show()
 
-    def test_player_shots(self, name):
-        event_name = "Shot"
-
-        shot_dict = ut.get_event_df(self.events_players, player_name=name, event_name=event_name)
-
-        shot_dict = ut.split_by_event_chars(shot_dict["Shot"], ["shot_outcome_name", "shot_body_part_name"])
-
-        shot_location_dict = {k: [v.location_x.tolist(), v.location_y.tolist()] for k, v in shot_dict.items()}
-
-        pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
-        fig, axs = pitch.draw(figsize=(12, 10))
-
-        for k, v in shot_location_dict.items():
-            outcome = k.split("_")[0]
-            body_part = k.split("_")[1]
-
-            pitch.scatter(v[0], v[1], s=150, edgecolors="black", label=k.replace("_", " "),
-                          c=con.shots_colors_dict[outcome], marker=con.shots_markers_dict[body_part], ax=axs)
-
-        plt.legend(con.shots_tuple_legend,
-                   con.shots_tuple_labels, numpoints=1,
-                   loc=1)
-        plt.show()
 
     def team_shots(self, name):
+        # Plotting teams shots during Match
+
+        # Getting shots locations
         df_shot_location_dict = self.shots_locations(name, player=False)
+
+        # Drawing Pitch
         pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
         fig, axs = pitch.draw(figsize=(12, 10))
 
+        # Using constanst to plot shots by body part and outcome
         for k, v in df_shot_location_dict.items():
             outcome = k.split("_")[0]
             body_part = k.split("_")[1]
@@ -707,11 +651,17 @@ class Match:
         plt.show()
 
     def player_recoveries(self, player_name):
+
+        # Plotting player recoveries
+
+        # Getting recoveries locations
         recoveries = self.player_recoveries_locations(player_name)
 
+        #Drawing Pitch
         pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
         fig, axs = pitch.draw(figsize=(12, 10))
 
+        # Plotting failed and completed recoveries
         pitch.scatter(recoveries["x_success"], recoveries["y_success"], s=150, edgecolors="white", color="blue",
                       marker="^",
                       label="Successful Recovery", ax=axs)
@@ -721,38 +671,19 @@ class Match:
         plt.show()
 
 
-    def test_player_recoveries(self, player_name):
-        event_name = "Ball Recovery"
-        event_values = {
-            "success": "Null",
-            "failure": "Not Null"
-        }
-
-        recoveries_dict = ut.get_event_df(df=self.events_players, player_name=player_name, event_name=event_name,
-                                     event_values=event_values, event_values_col="ball_recovery_recovery_failure")
-        recoveries_location_dict = ut.get_event_locations(event_dict=recoveries_dict, event_name=event_name)
-
-        pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
-        fig, axs = pitch.draw(figsize=(12, 10))
-
-        pitch.scatter(recoveries_location_dict["X_success"], recoveries_location_dict["Y_success"], s=150,
-                      edgecolors="black",
-                      c="blue", marker="o", ax=axs, label="Complete")
-
-        pitch.scatter(recoveries_location_dict["X_failure"], recoveries_location_dict["Y_failure"], s=150,
-                      edgecolors="black",
-                      c="red", marker="o", ax=axs, label="Incomplete")
-
-        plt.legend(loc=1)
-        plt.show()
-
 
     def player_dribbles(self, player_name):
+
+        # Plotting players recoveries
+
+        # Getting recoveries locations
         dribbles_dict = self.player_dribbles_locations(player_name)
 
+        #Drawing Pitch
         pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
         fig, axs = pitch.draw(figsize=(12, 10))
 
+        # Plotting failed and successful dribbles
         pitch.scatter(dribbles_dict["x_success"], dribbles_dict["y_success"], s=150, edgecolors="white", color="blue",
                       marker="^",
                       label="Complete", ax=axs)
@@ -763,51 +694,38 @@ class Match:
         plt.show()
 
 
-    def test_player_dribbles(self, player_name):
-        event_name = "Dribble"
-        event_values = {
-            "success": "Complete",
-            "failure": "Incomplete"
-        }
-
-        dribbles_dict = ut.get_event_df(df=self.events_players, player_name=player_name, event_name=event_name,
-                                     event_values=event_values, event_values_col="dribble_outcome_name")
-        dribbles_location_dict = ut.get_event_locations(event_dict=dribbles_dict, event_name=event_name)
-
-        pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
-        fig, axs = pitch.draw(figsize=(12, 10))
-
-        pitch.scatter(dribbles_location_dict["X_success"], dribbles_location_dict["Y_success"], s=150,
-                      edgecolors="black",
-                      c="blue", marker="o", ax=axs, label="Complete")
-
-        pitch.scatter(dribbles_location_dict["X_failure"], dribbles_location_dict["Y_failure"], s=150,
-                      edgecolors="black",
-                      c="red", marker="o", ax=axs, label="Incomplete")
-
-        plt.legend(loc=1)
-        plt.show()
-
     def player_passes(self, player_name, arrows=True):
 
+        # Plotting players passes
+
+        # Getting pass locations
         pass_dict = self.player_pass_locations(player_name)
 
+        # If we want to use the end location of passes
         if arrows:
+            # Draw Pitch
             pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
             fig, axs = pitch.draw(figsize=(12, 10))
 
+            # Plotting missed high passes
             pitch.scatter(pass_dict["x_miss_high"], pass_dict["y_miss_high"], s=150, marker='d', color='red',
                           edgecolors="white",
                           label="Missed High", ax=axs)
+            # Plotting missed low passes
             pitch.scatter(pass_dict["x_miss_low"], pass_dict["y_miss_low"], s=150, color='red', edgecolors="white",
                           label="Missed Low", ax=axs)
+
+            # Plotting complete low passes
             pitch.scatter(pass_dict["x_complete_low"], pass_dict["y_complete_low"], s=150, color='blue',
                           edgecolors="white", label="Complete Low",
                           ax=axs)
+
+            # Plotting complete high passes
             pitch.scatter(pass_dict["x_complete_high"], pass_dict["y_complete_high"], s=150, marker="d", color='blue',
                           edgecolors="white",
                           label="Complete High", ax=axs)
 
+            # Include arrows with end location
             pitch.arrows(pass_dict["x_passes"], pass_dict["y_passes"], pass_dict["x_end_location"],
                          pass_dict["y_end_location"],
                          ax=axs, color="white", width=1, alpha=0.5, linestyle="--")
@@ -817,17 +735,24 @@ class Match:
             plt.show()
 
         else:
+            # Draw Pitch
             pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
             fig, axs = pitch.draw(figsize=(12, 10))
 
+            # Missed high passes
             pitch.scatter(pass_dict["x_miss_high"], pass_dict["y_miss_high"], s=150, marker='d', color='red',
                           edgecolors="white",
                           label="Missed High", ax=axs)
+            # Missed low passes
             pitch.scatter(pass_dict["x_miss_low"], pass_dict["y_miss_low"], s=150, color='red', edgecolors="white",
                           label="Missed Low", ax=axs)
+
+            # Completeomplete low passes
             pitch.scatter(pass_dict["x_complete_low"], pass_dict["y_complete_low"], s=150, color='blue',
                           edgecolors="white", label="Complete Low",
                           ax=axs)
+
+            # Complete high passes
             pitch.scatter(pass_dict["x_complete_high"], pass_dict["y_complete_high"], s=150, marker="d", color='blue',
                           edgecolors="white",
                           label="Complete High", ax=axs)
@@ -835,6 +760,7 @@ class Match:
             plt.title(str(player_name) + "´s passes")
             plt.show()
 
+            # Plot end location of passes separately
             pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
             fig, axs = pitch.draw(figsize=(12, 10))
             pitch.scatter(pass_dict["x_end_location"], pass_dict["y_end_location"], s=150, marker='8', color='white',
@@ -844,24 +770,33 @@ class Match:
 
     def player_crosses(self, player_name, arrows=True):
 
+        # Plotting the locations and end locations of crosses
+
+        # Getting player crosses
         cross_dict = self.player_cross_locations(player_name)
 
+        # Include arrows with end locations
         if arrows:
+            # Draw Pitch
             pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
             fig, axs = pitch.draw(figsize=(12, 10))
 
+            # Missed High crosses
             pitch.scatter(cross_dict["x_miss_high"], cross_dict["y_miss_high"], s=150, marker='d', color='red',
                           edgecolors="white",
                           label="Missed High", ax=axs)
+            # Missed low crosses
             pitch.scatter(cross_dict["x_miss_low"], cross_dict["y_miss_low"], s=150, color='red', edgecolors="white",
                           label="Missed Low", ax=axs)
+            # Complete low crosses
             pitch.scatter(cross_dict["x_complete_low"], cross_dict["y_complete_low"], s=150, color='blue',
                           edgecolors="white", label="Complete Low",
                           ax=axs)
+            # Complete high crosses
             pitch.scatter(cross_dict["x_complete_high"], cross_dict["y_complete_high"], s=150, marker="d", color='blue',
                           edgecolors="white",
                           label="Complete High", ax=axs)
-
+            # Including arrows
             pitch.arrows(cross_dict["x_cross"], cross_dict["y_cross"], cross_dict["x_cross_end_location"],
                          cross_dict["y_cross_end_location"],
                          ax=axs, color="white", width=1, alpha=0.5, linestyle="--")
@@ -869,26 +804,31 @@ class Match:
             plt.legend(loc=8)
             plt.title(str(player_name) + "´s crosses")
             plt.show()
-
+        # No arrows
         else:
+            # Draw Pitch
             pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
             fig, axs = pitch.draw(figsize=(12, 10))
 
+            # Missed high crosses
             pitch.scatter(cross_dict["x_miss_high"], cross_dict["y_miss_high"], s=150, marker='d', color='red',
                           edgecolors="white",
                           label="Missed High", ax=axs)
+            # Missed low crosses
             pitch.scatter(cross_dict["x_miss_low"], cross_dict["y_miss_low"], s=150, color='red', edgecolors="white",
                           label="Missed Low", ax=axs)
+            # Complete low crosses
             pitch.scatter(cross_dict["x_complete_low"], cross_dict["y_complete_low"], s=150, color='blue',
                           edgecolors="white", label="Complete Low",
                           ax=axs)
+            # Complete high crosses
             pitch.scatter(cross_dict["x_complete_high"], cross_dict["y_complete_high"], s=150, marker="d", color='blue',
                           edgecolors="white",
                           label="Complete High", ax=axs)
             plt.legend(loc=8)
             plt.title(str(player_name) + "´s passes")
             plt.show()
-
+            # Plot end location separately
             pitch = Pitch(line_zorder=2, figsize=(4.4, 6.4), pitch_color='green')
             fig, axs = pitch.draw(figsize=(12, 10))
             pitch.scatter(cross_dict["x_cross_end_location"], cross_dict["y_cross_end_location"], s=150, marker='8',
@@ -898,28 +838,38 @@ class Match:
             plt.show()
 
     def player_xg(self, player_name):
+         # Plotting player xG (Expect goals)
 
+        # Getting player shots
         player_shots = self.get_shots_df(player_name)
+         # Reading shots xG predictions
         shots_xg = pd.read_csv("data/clean/xg/predictions_" + self.season.replace("/", "_") + ".csv")
-
+        # Joining player shots with xG predictions
         player_shots_xg = player_shots.join(shots_xg.set_index("id"), on="id", how="inner")
         player_shots_xg = player_shots_xg[["pred", "shot_outcome_name", "minute"]].copy()
 
+        # Cumulative sum of predicted xG
         player_shots_xg["pred_cumsum"] = player_shots_xg["pred"].cumsum()
 
-        print(player_shots_xg)
+        # Defining first last steps of player_shot_xg for the step plot
         player_shots_xg.loc[0] = [0, np.nan, 0, 0]
         player_shots_xg.loc[player_shots_xg.index.max() + 1] = [0, np.nan, self.events_players["minute"].max(),
                                                                 player_shots_xg["pred_cumsum"].max()]
+        # Sorting player_shots_xg for the step plot
         player_shots_xg = player_shots_xg.sort_index(ascending=True)
 
+        # Step plot
         plt.step(player_shots_xg["minute"], player_shots_xg["pred_cumsum"], where="post")
         plt.show()
 
     def goal_possessions(self):
+        # Getting list of possession id's that ended in a goal
+
+        # Searching for event 'Goal Condeded'
         events_goal_conceded = self.events[self.events.goalkeeper_type_name == 'Goal Conceded']
         events_goal_conceded.reset_index(inplace=True)
 
+        # Appending id's to a list
         possessions_goals_conceded = list()
         for i in range(events_goal_conceded.shape[0]):
             possessions_goals_conceded.append(events_goal_conceded.possession[i])
@@ -927,12 +877,18 @@ class Match:
         return possessions_goals_conceded
 
     def show_goals(self, figsize=16):
+
+        # Plotting the plays that ended up in a Goal
+
+        # Getting Goal Possessions
         goals_possessions = self.goal_possessions()
 
+        # Filtering play by relevant events
         events_goals = self.events_players[self.events_players['type_name'].isin(
             ['Pass', 'Carry', 'Shot', 'Interception', 'Block', 'Ball Recovery'])].copy()
         events_goals['type_name'] = events_goals.copy()['type_name'].copy().replace('Carry', 'Dribble')
 
+        # Converting x and y locations to a (105,68) coordinate system : system used for other plots is (120,80)
         events_goals['location_x'] = events_goals['location_x'].copy() * 105 / 120
         events_goals['location_y'] = abs((events_goals.copy()['location_y'].copy() * 68 / 80) - 68)
 
@@ -946,12 +902,13 @@ class Match:
 
         events_goals = events_goals.sort_index()
 
+        # Plotting each goal possession's last 10 events
         for i in goals_possessions:
             if events_goals[events_goals['possession'] == i].tail(10).empty:
                 goal = events_goals[events_goals['possession'] == i - 1].tail(10)
             else:
                 goal = events_goals[events_goals['possession'] == i].tail(10)
-
+            # Action plot with the events
             matplotsoccer.actions(
                 color='green',
                 location=goal[["location_x", "location_y"]],
@@ -962,14 +919,19 @@ class Match:
                 figsize=figsize)
 
     def player_actions(self, player_name):
+
+        # Plotting player's action zone during the match
+
+        # Getting actions locations
         player_actions_locations_dict = self.player_actions_locations(player_name)
-
+        #  Converting locations to (105,68) coordinate system
         x, y = ut.convert_xy_locations(player_actions_locations_dict["x"], player_actions_locations_dict["y"])
-
+        # Drawing Pitch
         pitch = Pitch(line_zorder=2, pitch_color='gray')
 
         fig, ax = pitch.draw(figsize=(12, 10))
 
+        # Plotting action zone
         pitch.kdeplot(x, y,
                       ax=ax,
                       levels=100,
@@ -978,6 +940,3 @@ class Match:
                       cmap=cmr.pride)
 
         plt.show()
-
-    def teams_stats(self):
-        return None
